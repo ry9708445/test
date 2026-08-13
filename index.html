@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CASE 64BA251</title>
+
+<!-- ============================================================
+  CHARACTER DATA — edit this array to swap in the real characters
+  name: character name
+  img : path or URL to the character image (e.g. an i.imgur.com direct link).
+        Leave as "" to fall back to an auto-generated initial badge.
+============================================================= -->
+<script>
+  window.CHARACTERS = [
+    { name: "image_2", img: "images/image_2.jpeg" },
+    { name: "image_3", img: "images/image_3.jpeg" },
+    { name: "image_4", img: "images/image_4.jpeg" },
+    { name: "image_5", img: "images/image_5.jpeg" },
+    { name: "image_6", img: "images/image_6.jpeg" },
+    { name: "image_7", img: "images/image_7.jpeg" },
+    { name: "image_8", img: "images/image_8.jpeg" },
+    { name: "image_9", img: "images/image_9.jpeg" },
+    { name: "image_10", img: "images/image_10.jpeg" },
+    { name: "image_11", img: "images/image_11.jpeg" },
+    { name: "image_12", img: "images/image_12.jpeg" },
+    { name: "image_13", img: "images/image_13.jpeg" },
+    { name: "image_14", img: "images/image_14.jpeg" },
+    { name: "image_15", img: "images/image_15.jpeg" },
+    { name: "\uFFFD \uFFFD \uFFFD \uFFFD \uFFFD \uFFFD", img: "images/image_16.jpeg" }, // 角色設定：姓名本身即為不可辨識字元
+    { name: "Hello :)", img: "images/image_17.jpeg" }
+  ];
+
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --void:#050907;
+    --wall-upper:#cfd3c2;
+    --wall-upper-dim:#8f9484;
+    --wall-lower:#16332b;
+    --wall-lower-deep:#0c211b;
+    --green:#5dffa3;
+    --green-dim:#2c7a56;
+    --green-glow: rgba(93,255,163,0.55);
+    --red:#ff2c3d;
+    --red-dim:#5a0d14;
+    --ink:#eef2ea;
+    --ink-muted:#93a99d;
+    --card:rgba(14,26,22,0.72);
+    --card-border: rgba(93,255,163,0.18);
+    --font-display:'Oswald', 'Noto Sans TC', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+    --font-body:'Noto Sans TC', sans-serif;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--void);
+    color:var(--ink);
+    font-family:var(--font-body);
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--green-dim); color:var(--ink); }
+
+  /* ---------------- Corridor background ---------------- */
+  .corridor{
+    position:fixed; inset:0; z-index:0; overflow:hidden;
+    background:var(--void);
+  }
+  .corridor::before{ /* upper wall (light) */
+    content:""; position:absolute; left:0; right:0; top:0; height:58%;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(207,211,194,0.20), rgba(207,211,194,0) 60%),
+      linear-gradient(180deg, #11140f 0%, #0a0d09 100%);
+  }
+  .corridor::after{ /* lower wainscot (green) */
+    content:""; position:absolute; left:0; right:0; bottom:0; height:46%;
+    background:
+      radial-gradient(120% 100% at 50% 100%, rgba(22,51,43,0.9), rgba(6,15,12,0.95) 65%),
+      linear-gradient(180deg, #0c211b 0%, #050b09 100%);
+    border-top:1px solid rgba(93,255,163,0.05);
+  }
+  .corridor-vp{ /* breathing red light at vanishing point */
+    position:absolute; left:50%; top:34%; width:46vmin; height:70vmin;
+    transform:translate(-50%,-40%);
+    background:radial-gradient(closest-side, rgba(255,44,61,0.55), rgba(255,44,61,0.18) 40%, rgba(255,44,61,0) 72%);
+    filter:blur(6px);
+    animation:breathe 4.2s ease-in-out infinite;
+    mix-blend-mode:screen;
+  }
+  .corridor-door{
+    position:absolute; left:50%; top:30%; width:9vmin; height:22vmin; min-width:60px; min-height:150px;
+    transform:translate(-50%,0);
+    background:linear-gradient(180deg,#3a0308,#160103);
+    box-shadow:0 0 40px 10px rgba(255,44,61,0.45), inset 0 0 20px rgba(255,44,61,0.4);
+    animation:breathe 4.2s ease-in-out infinite;
+  }
+  .corridor-lines{
+    position:absolute; inset:0;
+    background:
+      linear-gradient(115deg, transparent 48%, rgba(93,255,163,0.05) 49%, transparent 51%),
+      linear-gradient(65deg, transparent 48%, rgba(93,255,163,0.04) 49%, transparent 51%);
+    opacity:0.5;
+  }
+  .grain{
+    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .vignette{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 50%, transparent 40%, rgba(0,0,0,0.65) 100%);
+  }
+
+  @keyframes breathe{
+    0%,100%{ opacity:0.55; filter:blur(6px); }
+    50%{ opacity:1; filter:blur(3px); }
+  }
+  @keyframes flicker{
+    0%,19%,21%,23%,80%,100%{ opacity:1; }
+    20%,22%,79%{ opacity:0.35; }
+  }
+
+  /* ---------------- Layout ---------------- */
+  .app{
+    position:relative; z-index:2;
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:6vh 20px 5vh;
+  }
+  .screen{ width:100%; max-width:920px; display:none; flex-direction:column; align-items:center; }
+  .screen.active{ display:flex; animation:fadeUp .55s ease both; }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:translateY(0);} }
+
+  .plaque{
+    font-family:var(--font-mono); letter-spacing:0.35em; font-size:12px;
+    color:var(--green); text-transform:uppercase;
+    border:1px solid var(--card-border); border-radius:2px;
+    padding:6px 14px; background:rgba(93,255,163,0.05);
+    text-shadow:0 0 8px var(--green-glow);
+  }
+
+  /* ---------------- Start screen ---------------- */
+  #screen-start{ text-align:center; gap:22px; }
+  .room-number{
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.5em;
+    color:var(--green-dim); text-transform:uppercase;
+  }
+  .title{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(2.4rem, 8vw, 4.2rem); letter-spacing:0.04em;
+    color:var(--ink); text-transform:uppercase; line-height:1.05; margin:0;
+    text-shadow:0 0 14px var(--green-glow), 0 0 40px rgba(93,255,163,0.25);
+    animation:flicker 6s linear infinite;
+  }
+  .title em{ font-style:normal; color:var(--green); }
+  .subtitle{
+    color:var(--ink-muted); font-size:15px; max-width:480px; line-height:1.75;
+    margin:0;
+  }
+  .btn{
+    font-family:var(--font-display); font-weight:600; letter-spacing:0.12em;
+    text-transform:uppercase; font-size:15px; cursor:pointer;
+    color:var(--void); background:var(--green);
+    border:none; border-radius:3px; padding:15px 42px;
+    box-shadow:0 0 0px rgba(93,255,163,0); transition:box-shadow .25s, transform .15s;
+  }
+  .btn:hover{ box-shadow:0 0 26px var(--green-glow); transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0px) scale(.98); }
+  .btn.ghost{
+    background:transparent; color:var(--green); border:1px solid var(--card-border);
+  }
+  .btn.ghost:hover{ background:rgba(93,255,163,0.08); }
+  .btn.danger{ background:var(--red); box-shadow:none; }
+  .btn.danger:hover{ box-shadow:0 0 26px rgba(255,44,61,0.5); }
+  .btn-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+  .meta-line{
+    font-family:var(--font-mono); font-size:12px; color:var(--ink-muted); letter-spacing:0.15em;
+  }
+
+  /* ---------------- Battle screen ---------------- */
+  #screen-battle{ gap:26px; }
+  .battle-top{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .progress-track{
+    width:min(320px, 70vw); height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; background:var(--green); box-shadow:0 0 10px var(--green-glow);
+    width:0%; transition:width .4s ease;
+  }
+  .battle-arena{
+    display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center;
+    gap:18px; width:100%; min-width:0;
+  }
+  .versus{
+    font-family:var(--font-display); font-weight:700; font-size:15px; letter-spacing:.2em;
+    color:var(--red); text-shadow:0 0 14px rgba(255,44,61,0.65);
+    width:46px; height:46px; border:1px solid rgba(255,44,61,0.4); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    animation:breathe 4.2s ease-in-out infinite;
+  }
+  .contender{
+    background:var(--card); border:1px solid var(--card-border); border-radius:6px;
+    padding:22px 16px 24px; text-align:center; cursor:pointer; min-width:0;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .contender:hover{
+    transform:translateY(-4px);
+    border-color:rgba(93,255,163,0.55);
+    box-shadow:0 8px 30px rgba(93,255,163,0.12);
+  }
+  .contender:active{ transform:translateY(-1px) scale(.99); }
+  .contender.chosen{ border-color:var(--green); box-shadow:0 0 30px var(--green-glow); }
+  .contender.rejected{ opacity:0.25; filter:grayscale(1); transform:scale(.97); }
+  .avatar{
+    width:min(34vw, 168px); height:min(34vw, 168px); border-radius:6px;
+    background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:44px; font-weight:700; color:#04120c;
+    border:1px solid rgba(93,255,163,0.25);
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.35);
+  }
+  .cname{
+    font-family:var(--font-display); font-weight:600; font-size:17px; letter-spacing:.05em;
+    color:var(--ink); text-transform:uppercase;
+  }
+
+  /* ---------------- Prompt modal ---------------- */
+  .overlay{
+    position:fixed; inset:0; z-index:20; display:none; align-items:center; justify-content:center;
+    background:rgba(3,6,5,0.78); backdrop-filter:blur(3px);
+    padding:24px;
+  }
+  .overlay.active{ display:flex; animation:fadeUp .35s ease both; }
+  .modal{
+    background:#0a1512; border:1px solid var(--card-border); border-radius:8px;
+    padding:34px 30px; max-width:420px; width:100%; text-align:center;
+    box-shadow:0 0 60px rgba(93,255,163,0.08);
+  }
+  .modal h3{
+    font-family:var(--font-display); text-transform:uppercase; letter-spacing:.06em;
+    font-size:22px; margin:6px 0 10px; color:var(--green);
+    text-shadow:0 0 12px var(--green-glow);
+  }
+  .modal p{ color:var(--ink-muted); font-size:14px; line-height:1.7; margin:0 0 22px; }
+
+  /* ---------------- Results screen ---------------- */
+  #screen-results{ gap:20px; width:100%; }
+  .results-title{
+    font-family:var(--font-display); text-transform:uppercase; font-size:clamp(1.6rem,5vw,2.4rem);
+    letter-spacing:.05em; color:var(--ink); margin:0; text-align:center;
+    text-shadow:0 0 14px var(--green-glow);
+  }
+  .podium{
+    display:flex; align-items:flex-end; justify-content:center; gap:14px; width:100%;
+    margin-top:10px;
+  }
+  .podium-card{
+    background:var(--card); border:1px solid var(--card-border); border-radius:6px;
+    display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 10px 18px;
+    flex:1; max-width:220px;
+  }
+  .podium-card.first{ order:2; border-color:var(--green); box-shadow:0 0 40px var(--green-glow); padding-top:6px; }
+  .podium-card.second{ order:1; }
+  .podium-card.third{ order:3; }
+  .rank-tag{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.2em; color:var(--green-dim);
+  }
+  .podium-card.first .rank-tag{ color:var(--green); font-size:13px; }
+  .podium-avatar{
+    width:min(24vw,120px); height:min(24vw,120px); border-radius:6px; background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:32px; font-weight:700; color:#04120c;
+    border:1px solid rgba(93,255,163,0.25);
+  }
+  .podium-card.first .podium-avatar{ width:min(30vw,150px); height:min(30vw,150px); font-size:40px; }
+  .podium-name{ font-family:var(--font-display); font-size:14px; letter-spacing:.04em; text-transform:uppercase; text-align:center; }
+
+  .rank-list{ width:100%; max-width:520px; display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+  .rank-row{
+    display:flex; align-items:center; gap:14px;
+    background:var(--card); border:1px solid var(--card-border); border-radius:5px; padding:9px 14px;
+  }
+  .rank-row .rank-tag{ width:34px; text-align:center; flex-shrink:0; }
+  .rank-row .row-avatar{
+    width:38px; height:38px; border-radius:4px; background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
+    font-size:15px; font-weight:700; color:#04120c; flex-shrink:0;
+  }
+  .rank-row .row-name{ font-size:14px; letter-spacing:.02em; }
+
+  .fine-print{ font-size:12px; color:var(--ink-muted); text-align:center; margin-top:4px; }
+
+  /* ---------------- Full-screen ending animation ---------------- */
+  #screen-thanks{
+    position:fixed; inset:0; z-index:30; display:none;
+    align-items:center; justify-content:center;
+    background:#000; overflow:hidden;
+  }
+  #screen-thanks.active{ display:flex; animation:endingIn .55s ease both; }
+  .thanks-box{
+    position:absolute; inset:0; width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    background:#000;
+  }
+  .thanks-video{
+    width:100%; height:100%;
+    max-width:100vw; max-height:100vh; max-height:100dvh;
+    object-fit:contain; object-position:center;
+    display:block; background:#000;
+  }
+  @keyframes endingIn{
+    from{ opacity:0; transform:scale(.985); }
+    to{ opacity:1; transform:scale(1); }
+  }
+
+  /* ---------------- Phone portrait adaptation ---------------- */
+  @media (max-width:600px){
+    .app{ padding:3.5vh 10px 4vh; overflow:hidden; }
+    .screen{ max-width:100%; }
+    #screen-battle{ gap:18px; width:100%; }
+    .battle-top{ width:100%; }
+    .plaque{
+      max-width:100%; padding:6px 9px; font-size:10px;
+      letter-spacing:.20em; white-space:nowrap;
+    }
+    .progress-track{ width:min(76vw,320px); }
+    .battle-arena{
+      grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr);
+      gap:7px; width:100%;
+    }
+    .versus{
+      width:32px; height:32px; font-size:10px; letter-spacing:.08em;
+    }
+    .contender{
+      width:100%; min-width:0; padding:12px 7px 15px; gap:11px;
+    }
+    .avatar{
+      width:100%; max-width:145px; height:auto; aspect-ratio:1 / 1;
+      background-size:cover; background-position:center;
+    }
+    .cname{
+      width:100%; min-width:0; font-size:clamp(11px,3.5vw,15px);
+      line-height:1.2; overflow-wrap:anywhere; word-break:break-word;
+    }
+    .podium{ gap:6px; }
+    .podium-card{ min-width:0; padding-left:5px; padding-right:5px; }
+    .podium-name{ font-size:11px; overflow-wrap:anywhere; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+
+  a:focus-visible, button:focus-visible, .contender:focus-visible{
+    outline:2px solid var(--green); outline-offset:3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="corridor" aria-hidden="true">
+  <div class="corridor-lines"></div>
+  <div class="corridor-vp"></div>
+  <div class="corridor-door"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div class="app">
+
+  <!-- Start screen -->
+  <section id="screen-start" class="screen active">
+    <div class="room-number">CASE 64BA251</div>
+    <h1 class="title">CASE<br><em>64BA251</em></h1>
+    <button class="btn" id="btn-start">START</button>
+    <div class="meta-line" id="char-count-line"></div>
+  </section>
+
+  <!-- Battle screen -->
+  <section id="screen-battle" class="screen">
+    <div class="battle-top">
+      <div class="plaque" id="phase-label">PHASE 01 · INITIAL RANKING</div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="meta-line" id="progress-label">Comparison 1</div>
+    </div>
+    <div class="battle-arena">
+      <div class="contender" id="card-left" tabindex="0" role="button">
+        <div class="avatar" id="avatar-left"></div>
+        <div class="cname" id="name-left"></div>
+      </div>
+      <div class="versus">VS</div>
+      <div class="contender" id="card-right" tabindex="0" role="button">
+        <div class="avatar" id="avatar-right"></div>
+        <div class="cname" id="name-right"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results screen -->
+  <section id="screen-results" class="screen">
+    <div class="room-number" id="results-eyebrow">FINAL REPORT</div>
+    <h2 class="results-title">Results</h2>
+    <div class="podium" id="podium"></div>
+    <div class="rank-list" id="rank-list"></div>
+    <div class="btn-row">
+      <button class="btn ghost" id="btn-copy">Copy Results</button>
+      <button class="btn ghost" id="btn-restart">Restart</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- Mid-game prompt: view results or continue -->
+<div class="overlay" id="overlay-prompt">
+  <div class="modal">
+    <div class="plaque">Top 6 Determined</div>
+    <h3>Stop Here?</h3>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="btn" id="btn-view-results">View Results</button>
+      <button class="btn ghost" id="btn-continue">Continue Ranking</button>
+    </div>
+  </div>
+</div>
+
+<!-- Full-screen ending animation -->
+<div id="screen-thanks" aria-hidden="true">
+  <div class="thanks-box">
+    <video id="thanks-video" class="thanks-video" src="media/thanks.mp4" muted playsinline webkit-playsinline preload="auto"></video>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var RAW_CHARACTERS = (window.CHARACTERS || []).filter(function(c){ return c && c.name; });
+
+  var PALETTE = ["#123328","#0f2c22","#163a2c","#1a4232","#0c2419","#193d2f","#0e2e24","#173629"];
+
+  function initials(name){
+    var t = (name||"?").trim();
+    return t.slice(0,1).toUpperCase();
+  }
+
+  function avatarStyle(char, idx){
+    if(char.img){
+      return 'background-image:url(\'' + char.img.replace(/'/g,"") + '\');';
+    }
+    var color = PALETTE[idx % PALETTE.length];
+    return 'background-color:' + color + ';';
+  }
+
+  function setAvatarEl(el, char, idx){
+    el.style.cssText += avatarStyle(char, idx);
+    el.textContent = char.img ? "" : initials(char.name);
+  }
+
+  // ---------------- State ----------------
+  var characters = [];       // full shuffled character list (with original index)
+  var ranked = [];           // sorted list so far (most preferred first)
+  var queue = [];            // characters still waiting to be inserted
+  var comparisonsTotal = 0;
+  var comparisonsDone = 0;
+  var phase = 1;             // 1 = building top 6, 2 = continuing full ranking
+  var pendingResolve = null; // resolve function for the current comparison
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+    }
+    return a;
+  }
+
+  function estimateComparisons(n){
+    var total=0;
+    for(var i=1;i<n;i++){ total += Math.ceil(Math.log2(i+1)); }
+    return total;
+  }
+
+  // ---------------- Screen switching ----------------
+  var screens = {
+    start: document.getElementById('screen-start'),
+    battle: document.getElementById('screen-battle'),
+    results: document.getElementById('screen-results')
+  };
+  function showScreen(name){
+    Object.keys(screens).forEach(function(k){
+      screens[k].classList.toggle('active', k===name);
+    });
+  }
+
+  // ---------------- Init ----------------
+  var countLine = document.getElementById('char-count-line');
+  countLine.textContent = RAW_CHARACTERS.length + ' characters loaded';
+
+  // iPhone / in-app browsers may block a delayed video.play().
+  // Prime the muted video during the user's START tap so it can play 5 seconds later.
+  function unlockEndingVideo(){
+    var video = document.getElementById('thanks-video');
+    if(!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted','');
+    video.setAttribute('playsinline','');
+    video.setAttribute('webkit-playsinline','');
+    try{ video.load(); }catch(e){}
+    try{
+      var p = video.play();
+      if(p && typeof p.then === 'function'){
+        p.then(function(){
+          video.pause();
+          video.currentTime = 0;
+        }).catch(function(){});
+      }else{
+        video.pause();
+        video.currentTime = 0;
+      }
+    }catch(e){}
+  }
+
+  document.getElementById('btn-start').addEventListener('click', function(){
+    unlockEndingVideo();
+    if(RAW_CHARACTERS.length < 2){
+      alert('Not enough characters. At least 2 are required to start.');
+      return;
+    }
+    startGame();
+  });
+
+  function startGame(){
+    characters = shuffle(RAW_CHARACTERS.map(function(c,i){ return { name:c.name, img:c.img, _idx:i }; }));
+    ranked = [];
+    var initialCount = Math.min(6, characters.length);
+    queue = characters.slice(0, initialCount);
+    phase = 1;
+    comparisonsDone = 0;
+    comparisonsTotal = estimateComparisons(initialCount);
+    showScreen('battle');
+    runInsertionPhase(function(){
+      if(characters.length > initialCount){
+        openPrompt();
+      } else {
+        showResults();
+      }
+    });
+  }
+
+  // ---------------- Comparison / insertion sort core ----------------
+  function askCompare(a,b){
+    return new Promise(function(resolve){
+      pendingResolve = resolve;
+      renderBattle(a,b);
+    });
+  }
+
+  function renderBattle(a,b){
+    setAvatarEl(document.getElementById('avatar-left'), a, a._idx);
+    document.getElementById('name-left').textContent = a.name;
+    setAvatarEl(document.getElementById('avatar-right'), b, b._idx);
+    document.getElementById('name-right').textContent = b.name;
+
+    document.getElementById('card-left').classList.remove('chosen','rejected');
+    document.getElementById('card-right').classList.remove('chosen','rejected');
+
+    document.getElementById('phase-label').textContent = phase===1 ? 'PHASE 01 · INITIAL RANKING' : 'PHASE 02 · FULL RANKING';
+    document.getElementById('progress-label').textContent = 'Comparison ' + (comparisonsDone+1) + (comparisonsTotal ? (' / ~' + comparisonsTotal) : '');
+    var pct = comparisonsTotal ? Math.min(100, Math.round((comparisonsDone/comparisonsTotal)*100)) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+  }
+
+  function handleChoice(chosenSide){
+    if(!pendingResolve) return;
+    var leftEl = document.getElementById('card-left');
+    var rightEl = document.getElementById('card-right');
+    if(chosenSide==='left'){ leftEl.classList.add('chosen'); rightEl.classList.add('rejected'); }
+    else { rightEl.classList.add('chosen'); leftEl.classList.add('rejected'); }
+    comparisonsDone++;
+    var resolve = pendingResolve;
+    pendingResolve = null;
+    setTimeout(function(){ resolve(chosenSide); }, 260);
+  }
+
+  document.getElementById('card-left').addEventListener('click', function(){ handleChoice('left'); });
+  document.getElementById('card-right').addEventListener('click', function(){ handleChoice('right'); });
+  [ ['card-left','left'], ['card-right','right'] ].forEach(function(pair){
+    document.getElementById(pair[0]).addEventListener('keydown', function(e){
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); handleChoice(pair[1]); }
+    });
+  });
+
+  // binary-insert item into the ranked list, returns a Promise
+  function insertOne(item){
+    var lo=0, hi=ranked.length;
+    function step(){
+      if(lo>=hi){
+        ranked.splice(lo,0,item);
+        return Promise.resolve();
+      }
+      var mid = (lo+hi)>>1;
+      return askCompare(item, ranked[mid]).then(function(choice){
+        if(choice==='left'){ hi = mid; } else { lo = mid+1; }
+        return step();
+      });
+    }
+    return step();
+  }
+
+  function runInsertionPhase(done){
+    var i=0;
+    function next(){
+      if(i>=queue.length){ done(); return; }
+      var item = queue[i++];
+      insertOne(item).then(next);
+    }
+    next();
+  }
+
+  // ---------------- Mid-game prompt ----------------
+  var overlayPrompt = document.getElementById('overlay-prompt');
+  function openPrompt(){ overlayPrompt.classList.add('active'); }
+  function closePrompt(){ overlayPrompt.classList.remove('active'); }
+
+  document.getElementById('btn-view-results').addEventListener('click', function(){
+    closePrompt();
+    showResults();
+  });
+  document.getElementById('btn-continue').addEventListener('click', function(){
+    closePrompt();
+    phase = 2;
+    queue = characters.slice(ranked.length);
+    comparisonsDone = 0;
+    comparisonsTotal = estimateComparisons(characters.length) - estimateComparisons(ranked.length);
+    showScreen('battle');
+    runInsertionPhase(showResults);
+  });
+
+  // ---------------- Results screen ----------------
+  function showResults(){
+    showScreen('results');
+    document.getElementById('results-eyebrow').textContent = phase===1 ? 'TOP ' + ranked.length : 'FULL RANKING · ' + ranked.length;
+
+    var podium = document.getElementById('podium');
+    podium.innerHTML = '';
+    var top3 = ranked.slice(0,3);
+    var order = [1,0,2]; // display order: 2nd, 1st, 3rd
+    var classes = ['second','first','third'];
+    order.forEach(function(rankIdx, pos){
+      var char = top3[rankIdx];
+      if(!char) return;
+      var div = document.createElement('div');
+      div.className = 'podium-card ' + classes[pos];
+      var av = document.createElement('div');
+      av.className = 'podium-avatar';
+      setAvatarEl(av, char, char._idx);
+      var tag = document.createElement('div');
+      tag.className = 'rank-tag';
+      tag.textContent = 'NO.' + (rankIdx+1);
+      var name = document.createElement('div');
+      name.className = 'podium-name';
+      name.textContent = char.name;
+      div.appendChild(tag); div.appendChild(av); div.appendChild(name);
+      podium.appendChild(div);
+    });
+
+    var list = document.getElementById('rank-list');
+    list.innerHTML = '';
+    ranked.forEach(function(char, i){
+      if(i<3) return; // top 3 already shown on the podium
+      var row = document.createElement('div');
+      row.className = 'rank-row';
+      var tag = document.createElement('div');
+      tag.className = 'rank-tag';
+      tag.textContent = 'NO.' + (i+1);
+      var av = document.createElement('div');
+      av.className = 'row-avatar';
+      setAvatarEl(av, char, char._idx);
+      var name = document.createElement('div');
+      name.className = 'row-name';
+      name.textContent = char.name;
+      row.appendChild(tag); row.appendChild(av); row.appendChild(name);
+      list.appendChild(row);
+    });
+
+    scheduleThanks();
+  }
+
+  document.getElementById('btn-restart').addEventListener('click', function(){
+    showScreen('start');
+  });
+
+  document.getElementById('btn-copy').addEventListener('click', function(){
+    var lines = ranked.map(function(c,i){ return (i+1) + '. ' + c.name; });
+    var text = 'My Ranking Results (CASE 64BA251)\n' + lines.join('\n');
+    if(navigator.share){
+      navigator.share({ title:'My Ranking Results', text:text }).catch(function(){});
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(text).then(function(){
+        var btn = document.getElementById('btn-copy');
+        var original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function(){ btn.textContent = original; }, 1600);
+      });
+    }
+  });
+
+  // ---------------- Thank-you screen ----------------
+  var thanksTimer = null;
+  function scheduleThanks(){
+    if(thanksTimer) clearTimeout(thanksTimer);
+    thanksTimer = setTimeout(openThanks, 5000);
+  }
+  function openThanks(){
+    var ending = document.getElementById('screen-thanks');
+    var video = document.getElementById('thanks-video');
+    ending.classList.add('active');
+    ending.setAttribute('aria-hidden','false');
+    if(video){
+      video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute('muted','');
+      video.setAttribute('playsinline','');
+      video.setAttribute('webkit-playsinline','');
+      try{ video.currentTime = 0; }catch(e){}
+      var playPromise;
+      try{ playPromise = video.play(); }catch(e){}
+      if(playPromise && typeof playPromise.catch === 'function'){
+        playPromise.catch(function(){
+          // A second load/play attempt helps some iOS and embedded browsers.
+          try{
+            video.load();
+            video.muted = true;
+            video.play().catch(function(){});
+          }catch(e){}
+        });
+      }
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
